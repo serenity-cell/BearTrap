@@ -21,7 +21,7 @@ private:
     std::string honey_banner;
 
     void acceptConnections(std::shared_ptr<boost::asio::ip::tcp::socket> pSocket, const boost::system::error_code& error);
-    
+
     public:
     HoneyPot(int port, std::string service, std::string banner);
     ~HoneyPot();
