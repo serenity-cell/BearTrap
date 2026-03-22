@@ -5,34 +5,22 @@
 #include <boost/asio/placeholders.hpp>
 #include <boost/system/detail/error_code.hpp>
 #include <iostream>
+#include <iomanip>
 #include <memory>
 #include <string>
-
-/*
-the io_context        ← engine (you know this)
-the acceptor          ← tcp::acceptor, listens on a port
-port number           ← which port to fake
-service name          ← what service to pretend to be
-fake banner           ← string to send when someone connects
-log file              ← where to save connection attempts
-
-What Methods It Needs
-constructor           ← takes port, service name, banner
-startListening()      ← opens acceptor, starts async_accept
-
-
-acceptConnection()    ← callback when someone connects
-                         reads what they send
-                         sends fake banner back
-                         logs everything
-                         calls acceptConnection() again
-*/
 
 HoneyPot::HoneyPot (int input_port, std::string input_service, std::string input_banner) 
 : acceptor(io), socket(io){
     honey_port = input_port;
     honey_service = input_service;
     honey_banner = input_banner;
+}
+
+HoneyPot::~HoneyPot() {
+    if (acceptor.is_open()) {
+        acceptor.close();
+        acceptor.cancel();
+    }
 }
 
 void HoneyPot::startListening() {
@@ -53,34 +41,48 @@ void HoneyPot::startListening() {
 }
 
 void HoneyPot::acceptConnections(std::shared_ptr<boost::asio::ip::tcp::socket> pSocket, const boost::system::error_code& error) {
+
+    auto readBuffer = std::make_shared<std::array<char, 1024>>();
+
     // read callback
-    std::function <void (const boost::system::error_code& error, std::size_t bytes_transferred)> readCallback = [this, pSocket] 
+    std::function <void (const boost::system::error_code& error, std::size_t bytes_transferred)> readCallback = [this, pSocket, readBuffer] 
     (const boost::system::error_code& error, std::size_t bytes_transferred) {
         
-        std::cout << pSocket->remote_endpoint().address() << "\n";
+        std::string data(readBuffer->begin(), readBuffer->begin() + bytes_transferred);
+        std::cout << "received: " << data << "\n";
 
         auto newPsocket = std::make_shared<boost::asio::ip::tcp::socket>(io);
-
-    };
-
-    // write callback
-    std::function <void (const boost::system::error_code& error)> writeCallback = [pSocket, readCallback] (const boost::system::error_code& error) {
-        auto readBuffer = std::make_shared<std::array<char, 1024>>();
-
-        boost::asio::async_read(*pSocket, boost::asio::buffer(*readBuffer), 
-        readCallback );
-
-    };
-
-
-    auto newPsocket = std::make_shared<boost::asio::ip::tcp::socket>(io);
-    if (error.value() == 0) {
-
-        boost::asio::async_write(*pSocket, boost::asio::buffer(honey_banner), writeCallback);
 
         acceptor.async_accept(*newPsocket, [this, newPsocket](const boost::system::error_code& error) {
         acceptConnections(newPsocket, error);} 
         );
+    };
+
+    // write callback
+    std::function <void (const boost::system::error_code& error, std::size_t bytes_transferred)> writeCallback =
+    [pSocket, readCallback, readBuffer] (const boost::system::error_code& error, std::size_t bytes_transferred) {
+
+        pSocket->async_read_some( boost::asio::buffer(*readBuffer), 
+        readCallback );
+
+    };
+
+    if (error.value() == 0) {
+        auto now = std::time(nullptr);
+
+        std::string timeStr = std::ctime(&now);
+        timeStr.pop_back();  // removes trailing \n
+
+        std::cout << std::left
+
+            << std::setw(16) << pSocket->remote_endpoint().address()
+            << std::setw(14) << "service hit: "
+            << std::setw(6)  << honey_service
+            << std::setw(1) << "["
+            << std::setw(6) << timeStr << "]"
+            << std::endl;
+
+        boost::asio::async_write(*pSocket, boost::asio::buffer(honey_banner), writeCallback);
     }
     else {
         return;
