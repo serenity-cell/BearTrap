@@ -26,12 +26,7 @@ private:
     HoneyPot(int port, std::string service, std::string banner);
     ~HoneyPot();
 
-    int honey_port;
-    std::string honey_service;
-    std::string honey_banner;
-
     void startListening();
-    void acceptConnections();
     
 };
 
