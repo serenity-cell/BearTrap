@@ -1,4 +1,5 @@
 #include "honeypot.hpp"
+#include "logger.hpp"
 #include <boost/asio/generic/detail/endpoint.hpp>
 #include <boost/asio/impl/read.hpp>
 #include <boost/asio/impl/write.hpp>
@@ -8,6 +9,8 @@
 #include <iomanip>
 #include <memory>
 #include <string>
+
+Logger logs();
 
 HoneyPot::HoneyPot (int input_port, std::string input_service, std::string input_banner) 
 : acceptor(io), socket(io){
@@ -64,23 +67,27 @@ void HoneyPot::acceptConnections(std::shared_ptr<boost::asio::ip::tcp::socket> p
 
         pSocket->async_read_some( boost::asio::buffer(*readBuffer), 
         readCallback );
-
     };
 
     if (error.value() == 0) {
+
+        // delcaring variables for output and storing 
         auto now = std::time(nullptr);
-
+        auto ip_address = pSocket->remote_endpoint().address();
         std::string timeStr = std::ctime(&now);
-        timeStr.pop_back();  // removes trailing \n
+        timeStr.pop_back(); 
 
+
+        // outputting data of the intruder ip, what they tried to intrude and the timestamp
         std::cout << std::left
-
-            << std::setw(16) << pSocket->remote_endpoint().address()
+            << std::setw(16) << ip_address
             << std::setw(14) << "service hit: "
             << std::setw(6)  << honey_service
             << std::setw(1) << "["
             << std::setw(6) << timeStr << "]"
             << std::endl;
+            
+        logs().logCSV(ip_address, honey_banner, timeStr);
 
         boost::asio::async_write(*pSocket, boost::asio::buffer(honey_banner), writeCallback);
     }
