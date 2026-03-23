@@ -10,13 +10,12 @@
 #include <memory>
 #include <string>
 
-Logger logs();
-
 HoneyPot::HoneyPot (int input_port, std::string input_service, std::string input_banner) 
 : acceptor(io), socket(io){
     honey_port = input_port;
     honey_service = input_service;
     honey_banner = input_banner;
+
 }
 
 HoneyPot::~HoneyPot() {
@@ -86,8 +85,9 @@ void HoneyPot::acceptConnections(std::shared_ptr<boost::asio::ip::tcp::socket> p
             << std::setw(1) << "["
             << std::setw(6) << timeStr << "]"
             << std::endl;
-            
-        logs().logCSV(ip_address, honey_banner, timeStr);
+
+        // initializing constructor and the logCSV funtcion
+        logs.logCSV(ip_address, honey_banner, timeStr);
 
         boost::asio::async_write(*pSocket, boost::asio::buffer(honey_banner), writeCallback);
     }
