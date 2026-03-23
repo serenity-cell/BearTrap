@@ -1,5 +1,6 @@
 #include "honeypot.hpp"
 #include "logger.hpp"
+#include <asm-generic/socket.h>
 #include <boost/asio/generic/detail/endpoint.hpp>
 #include <boost/asio/impl/read.hpp>
 #include <boost/asio/impl/write.hpp>
@@ -30,11 +31,11 @@ void HoneyPot::startListening() {
 
     // setting up acceptor
     acceptor.open(boost::asio::ip::tcp::v4());
+    acceptor.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
     acceptor.bind(endPoint);
     acceptor.listen();
 
     auto pSocket = std::make_shared<boost::asio::ip::tcp::socket>(io);
-
     acceptor.async_accept(*pSocket, [this, pSocket](const boost::system::error_code& error) {
         acceptConnections(pSocket, error);}
     );
@@ -86,8 +87,8 @@ void HoneyPot::acceptConnections(std::shared_ptr<boost::asio::ip::tcp::socket> p
             << std::setw(6) << timeStr << "]"
             << std::endl;
 
-        // initializing constructor and the logCSV funtcion
         logs.logCSV(ip_address, honey_service, timeStr);
+
 
         boost::asio::async_write(*pSocket, boost::asio::buffer(honey_banner), writeCallback);
     }
