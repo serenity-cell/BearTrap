@@ -87,7 +87,7 @@ void HoneyPot::acceptConnections(std::shared_ptr<boost::asio::ip::tcp::socket> p
             << std::endl;
 
         // initializing constructor and the logCSV funtcion
-        logs.logCSV(ip_address, honey_banner, timeStr);
+        logs.logCSV(ip_address, honey_service, timeStr);
 
         boost::asio::async_write(*pSocket, boost::asio::buffer(honey_banner), writeCallback);
     }
