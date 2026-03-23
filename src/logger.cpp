@@ -21,7 +21,7 @@ void Logger::logCSV(boost::asio::ip::address ip_address, std::string service, st
         return;
     }
 
-    save_file << ip_address << "," << service << "," << time << "\n";
-
+    save_file << ip_address << " , " << service << " , " << time << "\n";
+    save_file.flush();
 
 }
