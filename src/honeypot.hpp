@@ -8,13 +8,13 @@
 #include <boost/asio/ip/address.hpp>
 #include <boost/asio/ip/address_v4.hpp>
 #include <boost/asio/ip/tcp.hpp>
+#include <vector>
 #include "logger.hpp"
 
 class HoneyPot { 
 private:
     boost::asio::io_context io;
-    boost::asio::ip::tcp::acceptor acceptor;
-    boost::asio::ip::tcp::socket socket;
+    std::vector<std::shared_ptr <boost::asio::ip::tcp::acceptor>> Vacceptor;
     Logger logs;
 
     // class declerations
@@ -24,7 +24,7 @@ private:
 
     
 
-    void acceptConnections(std::shared_ptr<boost::asio::ip::tcp::socket> pSocket, const boost::system::error_code& error);
+    void acceptConnections(std::shared_ptr<boost::asio::ip::tcp::socket> pSocket, const boost::system::error_code& error, int vector_size);
 
     public:
     HoneyPot(int port, std::string service, std::string banner);

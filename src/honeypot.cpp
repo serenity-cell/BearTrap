@@ -11,44 +11,51 @@
 #include <memory>
 #include <string>
 
-HoneyPot::HoneyPot (int input_port, std::string input_service, std::string input_banner) 
-: acceptor(io), socket(io){
+HoneyPot::HoneyPot (int input_port, std::string input_service, std::string input_banner) {
     honey_port = input_port;
     honey_service = input_service;
     honey_banner = input_banner;
 
+
+    const size_t count = 5;
+    Vacceptor.reserve(count);
+    
+    for (size_t i = 0; i < count; ++i) {
+
+        auto acceptor = std::make_shared<boost::asio::ip::tcp::acceptor>(io, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), honey_port + i));
+        Vacceptor.push_back(acceptor);
+    }
+
 }
 
 HoneyPot::~HoneyPot() {
-    if (acceptor.is_open()) {
-        acceptor.close();
-        acceptor.cancel();
+    for (size_t i = 0; i < Vacceptor.size(); i++ ) {
+        if (Vacceptor[i]->is_open()) {
+            Vacceptor[i]->cancel();
+            Vacceptor[i]->close();
+
+        
+        }
     }
 }
 
 void HoneyPot::startListening() {
-    boost::asio::ip::tcp::endpoint endPoint (boost::asio::ip::tcp::v4(), honey_port);
 
-    // setting up acceptor
-    acceptor.open(boost::asio::ip::tcp::v4());
-    acceptor.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
-    acceptor.bind(endPoint);
-    acceptor.listen();
-
-    auto pSocket = std::make_shared<boost::asio::ip::tcp::socket>(io);
-    acceptor.async_accept(*pSocket, [this, pSocket](const boost::system::error_code& error) {
-        acceptConnections(pSocket, error);}
-    );
-
+    for (int i = 0; i < Vacceptor.size(); i++) {
+        auto pSocket = std::make_shared<boost::asio::ip::tcp::socket>(io);
+        Vacceptor[i]->async_accept(*pSocket, [this,pSocket, i](const boost::system::error_code& error) {
+        acceptConnections(pSocket, error, i);}
+        );
+    }
     io.run();
 }
 
-void HoneyPot::acceptConnections(std::shared_ptr<boost::asio::ip::tcp::socket> pSocket, const boost::system::error_code& error) {
+void HoneyPot::acceptConnections(std::shared_ptr<boost::asio::ip::tcp::socket> pSocket, const boost::system::error_code& error, int i) {
 
     auto readBuffer = std::make_shared<std::array<char, 1024>>();
 
     // read callback
-    std::function <void (const boost::system::error_code& error, std::size_t bytes_transferred)> readCallback = [this, pSocket, readBuffer] 
+    std::function <void (const boost::system::error_code& error, std::size_t bytes_transferred)> readCallback = [this, pSocket, readBuffer, i] 
     (const boost::system::error_code& error, std::size_t bytes_transferred) {
         
         std::string data(readBuffer->begin(), readBuffer->begin() + bytes_transferred);
@@ -56,9 +63,9 @@ void HoneyPot::acceptConnections(std::shared_ptr<boost::asio::ip::tcp::socket> p
 
         auto newPsocket = std::make_shared<boost::asio::ip::tcp::socket>(io);
 
-        acceptor.async_accept(*newPsocket, [this, newPsocket](const boost::system::error_code& error) {
-        acceptConnections(newPsocket, error);} 
-        );
+            Vacceptor[i]->async_accept(*newPsocket, [this, newPsocket, i](const boost::system::error_code& error) {
+                acceptConnections(newPsocket, error, i);} 
+            );
     };
 
     // write callback
