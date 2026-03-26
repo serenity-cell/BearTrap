@@ -1,6 +1,5 @@
 #include "honeypot.hpp"
 #include "logger.hpp"
-#include <asm-generic/socket.h>
 #include <boost/asio/generic/detail/endpoint.hpp>
 #include <boost/asio/impl/read.hpp>
 #include <boost/asio/impl/write.hpp>
