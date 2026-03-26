@@ -11,18 +11,28 @@
 #include <string>
 
 HoneyPot::HoneyPot (int input_port, std::string input_service, std::string input_banner) {
-    honey_port = input_port;
+    // honey_port = input_port;
     honey_service = input_service;
     honey_banner = input_banner;
 
 
-    const size_t count = 5;
+    const size_t count = 4;
     Vacceptor.reserve(count);
     
     for (size_t i = 0; i < count; ++i) {
+        switch (i){
+            case 0: honey_port = 2222; break;
 
-        auto acceptor = std::make_shared<boost::asio::ip::tcp::acceptor>(io, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), honey_port + i));
+            case 1: honey_port = 8080; break;
+
+            case 2: honey_port = 2121; break;
+
+            case 3: honey_port = 5060; break;
+
+        }
+        auto acceptor = std::make_shared<boost::asio::ip::tcp::acceptor>(io, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), honey_port));
         Vacceptor.push_back(acceptor);
+
     }
 
 }
@@ -42,7 +52,7 @@ void HoneyPot::startListening() {
 
     for (int i = 0; i < Vacceptor.size(); i++) {
         auto pSocket = std::make_shared<boost::asio::ip::tcp::socket>(io);
-        Vacceptor[i]->async_accept(*pSocket, [this,pSocket, i](const boost::system::error_code& error) {
+        Vacceptor[i]->async_accept(*pSocket, [this, pSocket, i](const boost::system::error_code& error) {
         acceptConnections(pSocket, error, i);}
         );
     }
