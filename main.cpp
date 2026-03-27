@@ -1,6 +1,6 @@
 #include "src/honeypot.hpp"
 #include <cstring>
-#include <iostream>
+// #include <iostream>
 
 void userOptions(int &arg_count, char **&arg_vector, int &port_input, std::string &service, std::string &banner) {
     for (int i = 1; i < arg_count; i++) {
