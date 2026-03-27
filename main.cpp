@@ -32,10 +32,10 @@ int main(int arg_count, char *arg_vector[]) {
     // the cli commands and available arguments
     userOptions(arg_count, arg_vector, port_input, service, banner);
 
-    if (port_input == -1 || service.empty() || banner.empty()) {
-        std::cerr << "Usage: ./BearTrap -port <port> -service <name> -banner <string>\n";
-        return 1;
-    }
+    // if (port_input == -1 || service.empty() || banner.empty()) {
+    //     std::cerr << "Usage: ./BearTrap -port <port> -service <name> -banner <string>\n";
+    //     return 1;
+    // }
 
     HoneyPot honeyPot(port_input, service, banner);
     honeyPot.startListening();
