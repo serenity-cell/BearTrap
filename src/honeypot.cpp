@@ -60,10 +60,19 @@ void HoneyPot::startListening() {
 }
 
 void HoneyPot::acceptConnections(std::shared_ptr<boost::asio::ip::tcp::socket> pSocket, const boost::system::error_code& error, int i) {
+    switch (i) {
+        case 0: honey_service = "SSH"; honey_banner = "SSH-2.0-OpenSSH_8.9p1 Ubuntu-3"; break;
+
+        case 1: honey_service = "HTTP"; honey_banner = "HTTP/1.1 200 OK\r\nServer: Apache/2.4.41\r\n\r\n"; break; 
+
+        case 2: honey_service = "FTP"; honey_banner = "220 FTP server ready"; break; 
+
+        case 3: honey_service = "SIP"; honey_banner = "SIP/2.0 200 OK"; break; 
+    }
 
     auto readBuffer = std::make_shared<std::array<char, 1024>>();
 
-    // read callback
+    // read callback: reads what commands the intruder tries to send through and prints it
     std::function <void (const boost::system::error_code& error, std::size_t bytes_transferred)> readCallback = [this, pSocket, readBuffer, i] 
     (const boost::system::error_code& error, std::size_t bytes_transferred) {
         
