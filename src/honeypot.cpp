@@ -12,8 +12,8 @@
 
 HoneyPot::HoneyPot (int input_port, std::string input_service, std::string input_banner) {
     // honey_port = input_port;
-    honey_service = input_service;
-    honey_banner = input_banner;
+    // honey_service = input_service;
+    // honey_banner = input_banner;
 
 
     const size_t count = 4;
